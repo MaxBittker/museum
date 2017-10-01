@@ -2,7 +2,7 @@
 import React, { Component } from "react";
 import Floorplan from "./Floorplan";
 import Guard from "./Guard";
-import { canSee, visibleSet, flatten } from "./utils";
+import { canSee, visibleSet } from "./utils";
 import "./App.css";
 let walls = [
   [60, 20],
@@ -11,8 +11,8 @@ let walls = [
   [50, 70],
   [60, 100],
   [20, 80]
-  // [20, 40]
-].map(([x, y]) => [x * 4, y * 4]);
+  // [(20, 40)]
+].map(([x, y]) => [(x + 20) * 4, (y + 1) * 4]);
 
 class MuseumPlayground extends Component {
   constructor(props) {
@@ -33,7 +33,7 @@ class MuseumPlayground extends Component {
 
   render() {
     let { walls, guard } = this.state;
-    let out = walls.filter(p => canSee(guard, walls, p));
+    // let out = walls.filter(p => canSee(guard, walls, p));
     let sm = visibleSet(guard, walls);
 
     // let sm = canSee(guard, walls, walls[3]);
@@ -55,7 +55,7 @@ class MuseumPlayground extends Component {
           {/* <Guard position={walls[0]} /> */}
           {sm.map((p, i) => <Guard key={i} position={p} />)}
 
-          <Floorplan points={out} />
+          <Floorplan points={sm} />
 
           <Floorplan points={walls} />
         </svg>
