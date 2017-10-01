@@ -2,17 +2,10 @@
 import React, { Component } from "react";
 import Floorplan from "./Floorplan";
 import Guard from "./Guard";
-import { canSee, visibleSet } from "./utils";
+import { visibleSet, canSee } from "./utils";
+import { walls } from "./layouts";
+
 import "./App.css";
-let walls = [
-  [60, 20],
-  // [100, 40],
-  [100, 80],
-  [50, 70],
-  [60, 100],
-  [20, 80]
-  // [(20, 40)]
-].map(([x, y]) => [(x + 20) * 4, (y + 1) * 4]);
 
 class MuseumPlayground extends Component {
   constructor(props) {
@@ -33,17 +26,10 @@ class MuseumPlayground extends Component {
 
   render() {
     let { walls, guard } = this.state;
-    // let out = walls.filter(p => canSee(guard, walls, p));
+    let out = walls.filter(p => canSee(guard, walls, p));
     let sm = visibleSet(guard, walls);
-
     // let sm = canSee(guard, walls, walls[3]);
 
-    // let sightCones = walls.map(p => [
-    //   guard
-    //   canSee(guard, walls, p)),
-    //   p,
-    // );
-    // console.log(sm);
     return (
       <div className="Playground">
         <svg
@@ -51,11 +37,26 @@ class MuseumPlayground extends Component {
           ref="playground"
           onMouseMove={this.moveGuard.bind(this)}
         >
-          <Guard position={guard} />
-          {/* <Guard position={walls[0]} /> */}
-          {sm.map((p, i) => <Guard key={i} position={p} />)}
+          <defs>
+            <pattern
+              id="texture"
+              patternUnits="userSpaceOnUse"
+              width="256"
+              height="256"
+            >
+              <image
+                xlinkHref="https://www.transparenttextures.com/patterns/cardboard-flat.png"
+                x="0"
+                y="0"
+              />
 
-          <Floorplan points={sm} />
+              {/* <image xlinkHref="nnt.png" x="0" y="0" width="100" height="100" /> */}
+            </pattern>
+          </defs>
+          <Guard position={guard} sight={sm} />
+          {/* <Guard position={walls[0]} /> */}
+          {out.map((p, i) => <Guard key={i} position={p} />)}
+          {/* <Floorplan points={sm} /> */}
 
           <Floorplan points={walls} />
         </svg>

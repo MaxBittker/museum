@@ -41,3 +41,13 @@ svg{
 .Guard{
   fill: blueviolet;
 }
+.GuardSight{
+  stroke-width: 3px;
+  stroke: #3a5d41;
+  stroke-linejoin: round;
+  /* background-image: url("texture.png"); */
+}
+.GuardSight.color{
+  fill:royalblue;
+  opacity: 0.3;
+}
