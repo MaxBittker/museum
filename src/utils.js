@@ -95,45 +95,9 @@ function angle(o, p) {
   return Math.atan2(y, x); //o / a
 }
 
-function partitionByA(o, points) {
-  let partitioned = [[]];
-  let l = last(points);
-  let prevA = 1234; //angle(o, last);
-
-  for (var i = 0; i < points.length; i++) {
-    let p = points[i];
-    let a = angle(o, p);
-    let pA = prevA;
-    prevA = a;
-
-    if (Math.abs(a - pA) < e) {
-      partitioned[partitioned.length - 1].push(p);
-    } else {
-      partitioned.push([p]);
-    }
-  }
-  let first = points[0];
-  if (Math.abs(angle(o, first) - angle(o, l)) < e) {
-    partitioned[0] = partitioned[0].concat(partitioned.pop());
-  }
-  return partitioned;
-}
-
 function polarSort(o, points) {
   let isort = points.sort((a, b) => angle(o, a) - angle(o, b));
   return isort;
-  let pba = partitionByA(o, isort);
-
-  let pbd = pba.filter(part => part.length > 0).map((sibs, i, a) => {
-    let l = a.length;
-    let prev = last(a[(i - 1 + l) % l]);
-    if (sibs.length < 2) return sibs;
-    return sibs.sort((a, b) => distance(prev, a) - distance(prev, b));
-  });
-
-  let fpba = flatten(pbd);
-
-  return fpba;
 }
 
 function extendPoint(gp, fp) {
@@ -172,32 +136,45 @@ function visibleSet(gp, wallPoints) {
         return [i, s2];
       })
       .filter((a, _) => a)
-      .sort(([a, _], [b, __]) => distance(a, gp) - distance(b, gp))
-      .slice(0, 1);
+      .sort(([a, _], [b, __]) => distance(a, gp) - distance(b, gp));
+
+    if (blocks.length > 1) {
+      blocks = []; //removes extensions through walls
+    }
 
     p.sortingIndex = wallPoints.findIndex(wp => eq(wp, p));
-
-    if (blocks.length < 1) {
+    if (blocks.length === 0) {
       return [p];
     }
+
     let nP = blocks[0][0];
     let blockSegment = blocks[0][1];
     let segIndexA = wallPoints.findIndex(wp => eq(wp, blockSegment[0]));
     let segIndexB = wallPoints.findIndex(wp => eq(wp, blockSegment[1]));
-    if(segIndexB < segIndexA)
-      segIndexB+=wallPoints.length*2
+    
+    let dsA = distance(blockSegment[0],nP)
+    let dsB = distance(blockSegment[1],nP) 
+    let tot = distance(blockSegment[0],blockSegment[1])
 
-    let segIndex = (segIndexA + segIndexB) /2 
-    // console.log(p.sortingIndex, segIndex, segIndexA, segIndexB)
-    nP.sortingIndex = (p.sortingIndex + segIndex) / 2;
+    let ratioA =  (dsA / tot)
+    let ratioB =  (dsB / tot)
+    
+    if (segIndexB < segIndexA) segIndexB += wallPoints.length * 2;
+
+    let segIndex = (segIndexA * ratioB + segIndexB*ratioA)
+    // let segIndex = (segIndexA*ratio + segIndexB) / 2;
+    
+    console.log(p.sortingIndex, segIndex, segIndexA, segIndexB, ratioA)
+    nP.sortingIndex = segIndex //(p.sortingIndex + segIndex) / 2;
     return [p, nP];
   });
-
+  console.log("===")
+  console.log(directVisibles)
   let sortedVisibles = flatten(directVisibles).sort(
     (a, b) => a.sortingIndex - b.sortingIndex
   );
 
-  return sortedVisibles
+  return sortedVisibles;
 }
 
 function canSee(gp, wallPoints, target) {

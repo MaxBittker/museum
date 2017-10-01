@@ -15,7 +15,7 @@ class MuseumPlayground extends Component {
   getDefaultState() {
     return {
       walls,
-      guard: [260, 190]
+      guard: [40 * 6.5, 2.5 * 40]
     };
   }
   moveGuard(e) {
