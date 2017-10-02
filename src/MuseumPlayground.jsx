@@ -2,64 +2,86 @@
 import React, { Component } from "react";
 import Floorplan from "./Floorplan";
 import Guard from "./Guard";
-import { visibleSet, canSee } from "./utils";
-import { walls } from "./layouts";
+import Pattern from "./Pattern";
 
+import { walls } from "./layouts";
+import { canSee, resample } from "./utils";
 import "./App.css";
 
 class MuseumPlayground extends Component {
   constructor(props) {
     super(props);
     this.state = this.getDefaultState();
+    this.samples = resample(walls);
   }
   getDefaultState() {
     return {
       walls,
-      guard: [40 * 6.5, 2.5 * 40]
+      guard: [40 * 6.5, 2.5 * 40],
+      guards: []
     };
   }
-  moveGuard(e) {
+  mouseP(e) {
     let b = this.refs.playground.getBoundingClientRect();
     let p = [e.clientX - b.x, e.clientY - b.y];
-    this.setState({ guard: p });
+
+    return [...p];
   }
 
-  render() {
-    let { walls, guard } = this.state;
-    let out = walls.filter(p => canSee(guard, walls, p));
-    let sm = visibleSet(guard, walls);
-    // let sm = canSee(guard, walls, walls[3]);
+  moveGuard(e) {
+    this.setState({ guard: this.mouseP(e) });
+  }
 
+  placeGuard(e) {
+    let { guards } = this.state;
+    this.setState({ guards: [...guards, this.mouseP(e)] });
+  }
+
+  removeGuard() {
+    let { guards } = this.state;
+    guards.pop();
+    this.setState({ guards });
+  }
+  coverage() {
+    let { walls, guard, guards } = this.state;
+    let gset = [...guards, guard];
+    let seen = this.samples.filter(
+      wp => gset.find(g => canSee(g, walls, wp)) == undefined
+    );
+    return seen;
+  }
+  render() {
+    let { walls, guard, guards } = this.state;
+    let uncovered = this.coverage();
     return (
       <div className="Playground">
         <svg
           viewBox="0 0 500 500"
           ref="playground"
           onMouseMove={this.moveGuard.bind(this)}
+          onClick={this.placeGuard.bind(this)}
         >
-          <defs>
-            <pattern
-              id="texture"
-              patternUnits="userSpaceOnUse"
-              width="256"
-              height="256"
-            >
-              <image
-                xlinkHref="https://www.transparenttextures.com/patterns/cardboard-flat.png"
-                x="0"
-                y="0"
-              />
-
-              {/* <image xlinkHref="nnt.png" x="0" y="0" width="100" height="100" /> */}
-            </pattern>
-          </defs>
-          <Guard position={guard} sight={sm} />
-          {/* <Guard position={walls[0]} /> */}
-          {out.map((p, i) => <Guard key={i} position={p} />)}
-          {/* <Floorplan points={sm} /> */}
+          <Pattern />
 
           <Floorplan points={walls} />
+
+          {[...guards, guard].map((p, i) => (
+            <Guard key={i} walls={walls} position={p} colorIndex={i} />
+          ))}
+
+          {uncovered.map(([x, y], i) => (
+            <circle key={i} cx={x} cy={y} r="2" fill="red" />
+          ))}
         </svg>
+        <div className="controls">
+          <h2>Guards: {guards.length}</h2>
+          <h2>Vertices: {walls.length}</h2>
+          <h2>
+            Coverage:{" "}
+            {100 * (1 - uncovered.length / this.samples.length).toFixed(2)}%
+          </h2>
+          <button onClick={this.removeGuard.bind(this)}>undo</button>
+        </div>
       </div>
     );
   }

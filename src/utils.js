@@ -1,7 +1,4 @@
 let e = 0.00000000001; //espilon
-function last(l) {
-  return l[l.length - 1];
-}
 
 function eq(a, b) {
   return distance(a, b) < e;
@@ -51,6 +48,24 @@ function offset([ax, ay], [bx, by]) {
 
 function findY(x, s, o) {
   return x * s + o;
+}
+
+function interpolate([a, b]) {
+  let lim = distance(a, b);
+  let s = 20;
+  let samples = [a];
+
+  for (let i = s; i < lim; i += s) {
+    let r = i / lim;
+    samples.push(add(multiply(a, r), multiply(b, 1 - r)));
+  }
+  samples.push(b);
+  return samples;
+}
+
+function resample(wallPoints) {
+  let wp = partition(wallPoints);
+  return flatten(wp.map(interpolate));
 }
 
 function onSegment(p, [sa, sb]) {
@@ -109,7 +124,7 @@ function extendPoint(gp, fp) {
 
 function visibleSet(gp, wallPoints) {
   let walls = partition(wallPoints);
-  let directVisibles = polarSort(
+  let visibles = polarSort(
     gp,
     flatten(
       wallPoints.map(p => {
@@ -143,34 +158,32 @@ function visibleSet(gp, wallPoints) {
     }
 
     p.sortingIndex = wallPoints.findIndex(wp => eq(wp, p));
+
     if (blocks.length === 0) {
       return [p];
     }
 
-    let nP = blocks[0][0];
+    let nP = blocks[0][0]; //nP is the point created by projection
+    //this is the code needed to calculate its sorting index, which is based on that of the surface it's projected onto.
     let blockSegment = blocks[0][1];
     let segIndexA = wallPoints.findIndex(wp => eq(wp, blockSegment[0]));
     let segIndexB = wallPoints.findIndex(wp => eq(wp, blockSegment[1]));
-    
-    let dsA = distance(blockSegment[0],nP)
-    let dsB = distance(blockSegment[1],nP) 
-    let tot = distance(blockSegment[0],blockSegment[1])
 
-    let ratioA =  (dsA / tot)
-    let ratioB =  (dsB / tot)
-    
-    if (segIndexB < segIndexA) segIndexB += wallPoints.length * 2;
+    let dsA = distance(blockSegment[0], nP);
+    let dsB = distance(blockSegment[1], nP);
+    let tot = distance(blockSegment[0], blockSegment[1]);
 
-    let segIndex = (segIndexA * ratioB + segIndexB*ratioA)
-    // let segIndex = (segIndexA*ratio + segIndexB) / 2;
-    
-    console.log(p.sortingIndex, segIndex, segIndexA, segIndexB, ratioA)
-    nP.sortingIndex = segIndex //(p.sortingIndex + segIndex) / 2;
+    //for correct wrapping at the index N to 0 boundary:
+    if (segIndexB < segIndexA) segIndexB += wallPoints.length * 1;
+
+    let segIndex = (segIndexA * dsB + segIndexB * dsA) / tot;
+
+    // console.log(p.sortingIndex, segIndex, segIndexA, segIndexB, ratioA)
+    nP.sortingIndex = segIndex;
     return [p, nP];
   });
-  console.log("===")
-  console.log(directVisibles)
-  let sortedVisibles = flatten(directVisibles).sort(
+
+  let sortedVisibles = flatten(visibles).sort(
     (a, b) => a.sortingIndex - b.sortingIndex
   );
 
@@ -181,11 +194,13 @@ function canSee(gp, wallPoints, target) {
   let walls = partition(wallPoints);
   let s1 = [gp, target];
   let blocks = walls
-    .filter(([a, b]) => a !== target && b !== target)
+    .filter(
+      ([a, b]) => a !== target && b !== target && !onSegment(target, [a, b])
+    )
     .map(s2 => intersects(s1, s2))
     .filter(a => a);
 
   return blocks.length === 0;
 }
 
-export { canSee, flatten, visibleSet };
+export { canSee, flatten, visibleSet, resample };

@@ -1,5 +1,7 @@
 .App {
   text-align: center;
+}
+body{
   background-color: seashell;
 }
 
@@ -29,25 +31,34 @@
 
 svg{
   max-width: 500px;
-  border: 5px black solid;
+  border: 1px black solid;
 }
-
 .Floorplan{
   stroke-width: 3px;
   stroke: #3a5d41;
   stroke-linejoin: round;
-  fill:none;
+  fill-opacity: 0.3;
 }
 .Guard{
-  fill: blueviolet;
+  /* fill: blueviolet; */
 }
 .GuardSight{
-  stroke-width: 3px;
-  stroke: #3a5d41;
+  stroke-width: 1px;
+  stroke-dasharray: 1 2;
   stroke-linejoin: round;
-  /* background-image: url("texture.png"); */
+  opacity: 0.2;
 }
-.GuardSight.color{
-  fill:royalblue;
-  opacity: 0.3;
+
+.controls{
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+}
+button {
+  background-color: seashell;
+  border: 2px solid black;
+  height: 30px;
+  display: inline-block;
+  font-size: 17px;
+  appearance: none;
 }
