@@ -14,6 +14,7 @@ class MuseumPlayground extends Component {
     this.state = this.getDefaultState();
     this.samples = resample(walls);
   }
+
   getDefaultState() {
     return {
       walls,
@@ -21,6 +22,7 @@ class MuseumPlayground extends Component {
       guards: []
     };
   }
+
   mouseP(e) {
     let b = this.refs.playground.getBoundingClientRect();
     let p = [e.clientX - b.x, e.clientY - b.y];
@@ -29,6 +31,7 @@ class MuseumPlayground extends Component {
   }
 
   moveGuard(e) {
+    //this is for the hover state
     this.setState({ guard: this.mouseP(e) });
   }
 
@@ -42,14 +45,16 @@ class MuseumPlayground extends Component {
     guards.pop();
     this.setState({ guards });
   }
+
   coverage() {
     let { walls, guard, guards } = this.state;
     let gset = [...guards, guard];
     let seen = this.samples.filter(
-      wp => gset.find(g => canSee(g, walls, wp)) == undefined
+      wp => gset.find(g => canSee(g, walls, wp)) === undefined
     );
     return seen;
   }
+
   render() {
     let { walls, guard, guards } = this.state;
     let uncovered = this.coverage();
@@ -60,14 +65,15 @@ class MuseumPlayground extends Component {
           ref="playground"
           onMouseMove={this.moveGuard.bind(this)}
           onClick={this.placeGuard.bind(this)}
+          onMouseLeave={() => this.setState({ guard: [] })}
         >
           <Pattern />
-
-          <Floorplan points={walls} />
 
           {[...guards, guard].map((p, i) => (
             <Guard key={i} walls={walls} position={p} colorIndex={i} />
           ))}
+
+          <Floorplan points={walls} />
 
           {uncovered.map(([x, y], i) => (
             <circle key={i} cx={x} cy={y} r="2" fill="red" />
@@ -78,7 +84,7 @@ class MuseumPlayground extends Component {
           <h2>Vertices: {walls.length}</h2>
           <h2>
             Coverage:{" "}
-            {100 * (1 - uncovered.length / this.samples.length).toFixed(2)}%
+            {(100 * (1 - uncovered.length / this.samples.length)).toFixed(1)}%
           </h2>
           <button onClick={this.removeGuard.bind(this)}>undo</button>
         </div>
